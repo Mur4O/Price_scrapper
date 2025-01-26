@@ -1,29 +1,30 @@
 import time
+import sys
 import re
 import psycopg
+import selenium
+from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
-
-# from Test_connection import cursor
+from logger import logging
 
 path_citilink_videocard = "https://www.citilink.ru/catalog/videokarty/?sorting=price_desc"
-# path_citilink_processor = https://www.citilink.ru/catalog/processory/?sorting=price_desc
-# path_dns = "https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/?order=6&stock=now-today-tomorrow-later-out_of_stock"
 
 options = ChromeOptions()
 options.add_argument("--window-size=1920,1080")
 options.add_argument("--headless=new")
 
 driver = webdriver.Chrome(options)
-driver.get(path_citilink_videocard)
+try:
+    driver.get(path_citilink_videocard)
+except selenium.common.exceptions.WebDriverException as CRITICAL:
+    logging.critical('ERR_CONNECT_TO_SITILINK')
+    sys.exit()
 actions = ActionChains(driver)
 driver.implicitly_wait(10)
-
-xpath_to_button = '/html/body/div[2]/div/main/section/div[2]/div/div/section/div[2]/div[3]/div/div[1]/div[2]/button/span'
-xpath_to_accept_button = '/html/body/div[2]/div/div[4]/div[1]/div/div/button/span'
 
 time.sleep(3)
 xpath_to_body = '/html/body'
@@ -31,12 +32,17 @@ body = driver.find_element(By.XPATH, xpath_to_body)
 # print(body.get_attribute('innerHTML'))
 body.send_keys(Keys.END)
 
+xpath_to_accept_button = '/html/body/div[2]/div/div[4]/div[1]/div/div/button/span'
+
 try:
     accept_button = driver.find_element(By.XPATH, xpath_to_accept_button)
     actions.move_to_element(accept_button).click().perform()
     time.sleep(1)
-except:
+except NoSuchElementException:
+    print('No accept cookie button')
     time.sleep(1)
+
+xpath_to_button = '/html/body/div[2]/div/main/section/div[2]/div/div/section/div[2]/div[3]/div/div[1]/div[2]/button/span'
 
 i = 0
 while i == 0:
@@ -45,7 +51,7 @@ while i == 0:
         actions.move_to_element(button).click().perform()
         print('page')
         time.sleep(3)
-        # i = 1
+        i = 1
     except:
         print('pages are out')
         i = 1
@@ -76,10 +82,11 @@ while i == 0:
         price = price.replace(' ', '')
 
         product.append(int(price))
+        product.append(1)
         products.append(tuple(product))
         # print(products)
         # time.sleep(3)
-        # i = 1
+        i = 1
     except:
         i = 1
 
@@ -88,11 +95,16 @@ for elem in products:
 
 print(len(products))
 
-conn = psycopg.connect(f"postgresql://postgres@dbserver.lan/scrapper")
-cursor = conn.cursor()
+try:
+    conn = psycopg.connect(f"postgresql://postgres@dbserver.lan/scrapper")
+    cursor = conn.cursor()
 
-cursor.executemany("insert into dbo.products (Name, Price) VALUES (%s, %s)", products)
-conn.commit()
+    cursor.executemany("insert into dbo.products (Name, Price, Shop_id) VALUES (%s, %s, %s)", products)
+    conn.commit()
 
-cursor.close()
-conn.close()
+    cursor.close()
+    conn.close()
+except psycopg.OperationalError:
+    print('Не удалось подключиться к бд')
+else:
+    print('Случилась жопа во время заливки данных')

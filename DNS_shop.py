@@ -7,23 +7,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
 
-
-
-# path_citilink_videocard = "https://www.citilink.ru/catalog/videokarty/?sorting=price_desc"
-# path_citilink_processor = https://www.citilink.ru/catalog/processory/?sorting=price_desc
-path_dns = "https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/?order=6&stock=now-today-tomorrow-later-out_of_stock"
+path_dns_videocard = "https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/?order=2&stock=now-today-tomorrow-later"
 
 options = ChromeOptions()
 options.add_argument("--window-size=1920,1080")
 options.add_argument("--headless=new")
 
 driver = webdriver.Chrome(options)
-driver.get(path_dns)
+driver.get(path_dns_videocard)
 actions = ActionChains(driver)
 driver.implicitly_wait(10)
-
-xpath_to_button = '/html/body/div[2]/div/main/section/div[2]/div/div/section/div[2]/div[3]/div/div[1]/div[2]/button/span'
-xpath_to_accept_button = '/html/body/div[2]/div/div[4]/div[1]/div/div/button/span'
 
 time.sleep(3)
 xpath_to_body = '/html/body'
@@ -31,12 +24,9 @@ body = driver.find_element(By.XPATH, xpath_to_body)
 # print(body.get_attribute('innerHTML'))
 body.send_keys(Keys.END)
 
-try:
-    accept_button = driver.find_element(By.XPATH, xpath_to_accept_button)
-    actions.move_to_element(accept_button).click().perform()
-    time.sleep(1)
-except:
-    time.sleep(1)
+xpath_to_button = '/html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div/button'
+                 # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[5]/div/button
+                 # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[7]/div/button
 
 i = 0
 while i == 0:

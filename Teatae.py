@@ -1,8 +1,3 @@
+from logger import logging
 
-bigger_list = []
-list = []
-
-list.append(100)
-list.append(int('100'))
-
-print(list)
+logging.warning("A WARNING 1235")
