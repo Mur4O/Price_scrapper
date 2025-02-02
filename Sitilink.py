@@ -10,14 +10,23 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
 from logger import logging
+from selenium.webdriver.chrome.service import Service
 
 path_citilink_videocard = "https://www.citilink.ru/catalog/videokarty/?sorting=price_desc"
 
 options = ChromeOptions()
 options.add_argument("--window-size=1920,1080")
 options.add_argument("--headless=new")
+options.add_argument('--disable-blink-features=AutomationControlled')
+options.add_argument("--disable-extensions")
+options.add_experimental_option('useAutomationExtension', False)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.binary_location = '/Users/yarik/Chrome_with_Driver/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
+service = Service(executable_path="/Users/yarik/Chrome_with_Driver/chromedriver-mac-arm64/chromedriver")
+driver = webdriver.Chrome(service=service,options=options)
+driver.maximize_window()
+driver.save_screenshot('nowsecure.png')
 
-driver = webdriver.Chrome(options)
 try:
     driver.get(path_citilink_videocard)
 except selenium.common.exceptions.WebDriverException as CRITICAL:
@@ -31,6 +40,8 @@ xpath_to_body = '/html/body'
 body = driver.find_element(By.XPATH, xpath_to_body)
 # print(body.get_attribute('innerHTML'))
 body.send_keys(Keys.END)
+
+# driver.save_screenshot('screenshot.png')
 
 xpath_to_accept_button = '/html/body/div[2]/div/div[4]/div[1]/div/div/button/span'
 
@@ -51,7 +62,7 @@ while i == 0:
         actions.move_to_element(button).click().perform()
         print('page')
         time.sleep(3)
-        i = 1
+        # i = 1
     except:
         print('pages are out')
         i = 1
@@ -86,7 +97,7 @@ while i == 0:
         products.append(tuple(product))
         # print(products)
         # time.sleep(3)
-        i = 1
+        # i = 1
     except:
         i = 1
 
@@ -96,7 +107,7 @@ for elem in products:
 print(len(products))
 
 try:
-    conn = psycopg.connect(f"postgresql://postgres@dbserver.lan/scrapper")
+    conn = psycopg.connect(f"postgresql://postgres@sqlserver/scrapper")
     cursor = conn.cursor()
 
     cursor.executemany("insert into dbo.products (Name, Price, Shop_id) VALUES (%s, %s, %s)", products)
@@ -106,5 +117,3 @@ try:
     conn.close()
 except psycopg.OperationalError:
     print('Не удалось подключиться к бд')
-else:
-    print('Случилась жопа во время заливки данных')

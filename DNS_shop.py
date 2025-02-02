@@ -1,11 +1,15 @@
 import time
+import sys
 import re
 import psycopg
+import selenium
+from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
+from logger import logging
 
 path_dns_videocard = "https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/?order=2&stock=now-today-tomorrow-later"
 
@@ -27,7 +31,7 @@ body.send_keys(Keys.END)
 xpath_to_button = '/html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div/button'
                  # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[5]/div/button
                  # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[7]/div/button
-# aaa
+
 i = 0
 while i == 0:
     try:

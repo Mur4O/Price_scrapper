@@ -1,14 +1,19 @@
-import psycopg
+import asyncio
+from playwright.async_api import async_playwright, Playwright
 
-conn = psycopg.connect(f"postgresql://postgres@dbserver.lan/albion")
+async def run(playwright: Playwright):
+    webkit = playwright.webkit
+    browser = await webkit.launch()
+    context = await browser.new_context()
+    page = await context.new_page()
+    await page.goto("https://dns.ru")
+    await page.screenshot(path="screenshot.png")
+    await browser.close()
 
-cursor = conn.cursor()
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
 
-# cursor.execute("insert into Products (Name, Price) values ('RTX 3060', 50000)")
-# conn.commit()
-
-cursor.execute("select * from Products")
-cursor.fetchone()
-
-cursor.close()
-conn.close()
+# 1729203798450/Ec2vRWuhVlUJjqao/KjZA7qLlOoIuun8lEH2boA==
+# 1729203797909/fMqw5PDPSwJ4Be12/kyOdfsCrL6GXYZl/TXpRsQ==
