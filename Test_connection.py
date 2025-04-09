@@ -7,7 +7,6 @@ async def run(playwright: Playwright):
     context = await browser.new_context()
     page = await context.new_page()
     await page.goto("https://dns.ru")
-    await page.screenshot(path="screenshot.png")
     await browser.close()
 
 async def main():
