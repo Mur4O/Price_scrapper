@@ -38,8 +38,8 @@ options.add_argument('--disable-blink-features=AutomationControlled')
 options.add_argument("--disable-extensions")
 options.add_experimental_option('useAutomationExtension', False)
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.binary_location = '/Users/yarik/Chrome_with_Driver/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
-service = Service(executable_path="/Users/yarik/Chrome_with_Driver/chromedriver-mac-arm64/chromedriver")
+options.binary_location = 'D:\Chrome_with_Driver\chrome-win64\chrome.exe'
+service = Service(executable_path="D:\Chrome_with_Driver\chromedriver-win64\chromedriver.exe")
 driver = webdriver.Chrome(service=service,options=options)
 
 actions = ActionChains(driver)
@@ -128,7 +128,7 @@ with Timer():
 
 logging.warning(f'Обнаружено {len(products)} товаров')
 # print(len(products))
-
+'''
 stage_name = 'льём в бд'
 with Timer():
     try:
@@ -141,4 +141,4 @@ with Timer():
         cursor.close()
         conn.close()
     except psycopg.OperationalError:
-        logging.critical('Не удалось подключиться к бд')
+        logging.critical('Не удалось подключиться к бд')'''

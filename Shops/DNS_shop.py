@@ -3,7 +3,9 @@ import sys
 import re
 import psycopg
 import selenium
+from fake_useragent import UserAgent
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -11,74 +13,58 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
 from logger import logging
 
-path_dns_videocard = "https://www.dns-shop.ru/catalog/17a89aab16404e77/videokarty/?order=2&stock=now-today-tomorrow-later"
+path_to_dns = "http://127.0.0.1:5000/link"
 
 options = ChromeOptions()
 options.add_argument("--window-size=1920,1080")
-options.add_argument("--headless=new")
+options.add_argument('--disable-blink-features=AutomationControlled')
+options.add_argument("--disable-extensions")
+options.add_experimental_option('useAutomationExtension', False)
+options.add_experimental_option("excludeSwitches", ["enable-automation"])
+# options.add_argument("--headless=new")
 
-driver = webdriver.Chrome(options)
-driver.get(path_dns_videocard)
-actions = ActionChains(driver)
+ua = UserAgent()
+userAgent = ua.random
+options.add_argument(f'user-agent={userAgent}')
+
+options.binary_location = 'D:\Chrome_with_Driver\chrome-win64\chrome.exe'
+service = Service(executable_path="D:\Chrome_with_Driver\chromedriver-win64\chromedriver.exe")
+driver = webdriver.Chrome(service=service,options=options)
 driver.implicitly_wait(10)
+actions = ActionChains(driver)
 
-time.sleep(3)
-xpath_to_body = '/html/body'
-body = driver.find_element(By.XPATH, xpath_to_body)
-# print(body.get_attribute('innerHTML'))
-body.send_keys(Keys.END)
+def open_dns():
+    driver.get(path_to_dns)
+    time.sleep(3)
+    xpath_to_button = '/html/body/a'
+    button = driver.find_element(By.XPATH, xpath_to_button)
+    actions.move_to_element(button).click().perform()
 
-xpath_to_button = '/html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[2]/div/button'
-                 # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[5]/div/button
-                 # /html/body/div[2]/div/div[3]/div[2]/div[2]/div/div[7]/div/button
+    time.sleep(3)
+    driver.switch_to.window(driver.window_handles[1])
 
-i = 0
-while i == 0:
-    try:
-        button = driver.find_element(By.XPATH, xpath_to_button)
-        actions.move_to_element(button).click().perform()
-        print('page')
+    path_to_403 = '/html/body'
+    head = driver.find_element(By.XPATH, path_to_403)
+    result = head.get_attribute('innerHTML')
+    # print(result)
+
+    x = re.findall("(Доступ к сайту www.dns-shop.ru запрещен.)", result)
+    # print(len(x))
+
+    if len(x) != 0:
         time.sleep(3)
-        i = 1
-    except:
-        print('pages are out')
-        i = 1
+        driver.close()
+        driver.switch_to.window(driver.window_handles[0])
+        return True
+    else:
+        return False
 
-regex = re.compile(r'(?<=>)[А-Яа-яA-Za-z\s0-9]{1,}')
-regex_to_price = re.compile(r'(?<=>)\d{1,}\s\d{1,}(?=<)')
+# '<a target="_blank" rel="noopener noreferrer" href="https://www.dns-shop.ru/">DNS</a>'
+# xpath_to_body = '/html/body/a'
+# body = driver.find_element(By.XPATH, xpath_to_body)
+# # print(body.get_attribute('innerHTML'))
+# body.send_keys(Keys.END)
+result_code = True
 
-i = 0
-number_of_product = 0
-products = []
-while i == 0:
-    product = []
-    number_of_product += 1
-    try:
-        xpath_to_product_card = f'/html/body/div[2]/div/main/section/div[2]/div/div/section/div[2]/div[2]/div[{number_of_product}]/div/div[2]/div[6]/ul'
-        product_card = driver.find_element(By.XPATH, xpath_to_product_card)
-        xpath_to_price = f'/html/body/div[2]/div/main/section/div[2]/div/div/section/div[2]/div[2]/div[{number_of_product}]/div/div[2]/div[7]/div[1]/div[2]/span/span'
-        price = driver.find_element(By.XPATH, xpath_to_price)
-
-        product_card = product_card.get_attribute('innerHTML')
-        product_card = re.findall(regex, product_card)
-        product_card = product_card[1]
-        product.append(product_card)
-
-        price = price.get_attribute('innerHTML')
-        price = re.findall(regex_to_price, price)
-        price = price[0]
-
-        product.append(price)
-        products.append(product)
-        # print(products)
-        # time.sleep(3)
-        # i = 1
-    except:
-        i = 1
-
-for elem in products:
-    print(elem)
-
-
-# conn = psycopg.connect(f"postgresql://postgres@dbserver.lan/albion")
-
+while result_code:
+    result_code = open_dns()
