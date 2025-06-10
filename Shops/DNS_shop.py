@@ -21,19 +21,18 @@ options.add_argument('--disable-blink-features=AutomationControlled')
 options.add_argument("--disable-extensions")
 options.add_experimental_option('useAutomationExtension', False)
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
+options.binary_location = 'D:\Chrome_with_Driver\chrome-win64\chrome.exe'
 # options.add_argument("--headless=new")
 
 ua = UserAgent()
-userAgent = ua.random
-options.add_argument(f'user-agent={userAgent}')
-
-options.binary_location = 'D:\Chrome_with_Driver\chrome-win64\chrome.exe'
-service = Service(executable_path="D:\Chrome_with_Driver\chromedriver-win64\chromedriver.exe")
-driver = webdriver.Chrome(service=service,options=options)
-driver.implicitly_wait(10)
-actions = ActionChains(driver)
 
 def open_dns():
+    userAgent = ua.random
+    options.add_argument(f'user-agent={userAgent}')
+    service = Service(executable_path="D:\Chrome_with_Driver\chromedriver-win64\chromedriver.exe")
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.implicitly_wait(10)
+    actions = ActionChains(driver)
     driver.get(path_to_dns)
     time.sleep(3)
     xpath_to_button = '/html/body/a'
@@ -55,6 +54,7 @@ def open_dns():
         time.sleep(3)
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
+        driver.close()
         return True
     else:
         return False
@@ -66,5 +66,5 @@ def open_dns():
 # body.send_keys(Keys.END)
 result_code = True
 
-while result_code:
+while True:
     result_code = open_dns()
