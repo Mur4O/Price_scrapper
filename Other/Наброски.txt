@@ -1,0 +1,32 @@
+Хранение данных:
+Name varchar(max)
+Model varchar(64) -- С помощью regex выковырять модель видяхи (прим. RTX 5060, RX 7800)
+Price int
+ShopId int
+
+Ттх видяхи ручками заливать с доверенных сайтов (https://www.techpowerup.com/gpu-specs/?sort=generation) в отдельной табличке
+Ттх:
+Model varchar(64)
+GraphicsProcessor varchar
+Cores int
+TMUS int
+ROPS int
+MemorySize int
+MemoryType varchar
+BusWidth int -- Ширина шины
+
+
+Программа падает если при переоткрытии сайта не сездавать driver заново
+Функция:
+    Поднять драйвер
+    Попытаться подключиться
+    Если не удалось, то полностью пристрелить (driver.quit())
+    Вернуть статус, удача или нет?
+
+
+DNS: 'Видеокарта PNY RTX 5000 Ada Generation [VCNRTX5000ADA-SB] [PCIe 4.0 32 ГБ GDDR6, 256 бит, 4 x DisplayPort, GPU 1155 МГц]
+
+driver = webdriver.Chrome()
+    driver.get("https://www.selenium.dev/selenium/web/locators_tests/locators.html")
+    element = driver.find_element(By.PARTIAL_LINK_TEXT, "Official Page")
+
