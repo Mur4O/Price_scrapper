@@ -4,46 +4,46 @@ from pydantic import BaseModel
 import uvicorn
 import ConnectionPool as cp
 import pandas as pd
-
+import json
+import logging
+logger = logging.getLogger("uvicorn")
 
 app = FastAPI()
 data = pd.DataFrame
-UserSessions = []
+UserSessions = {}
+
 
 class CategoryFilter(BaseModel):
-    BusWidth: str = None,
-    Cores: str = None,
-    GraphicsProcessor: str = None,
-    ImagePath: str = None,
-    MemorySize: str = None,
-    MemoryType: str = None,
-    Name: str = None,
-    ROPS: str = None,
-    TMUS: str = None
+    productName: str
+    graphicsProcessor: str
+    memorySize: str
+    memoryType: str
+    busWidth: str
+    mediumPrice: str
 
 def _fetchCategories():
     conn = cp.connToSQL()
     cursor = conn.cursor()
     query = '''
-                    select 
-                        gp.Name as ProductName
-                        ,gp.GraphicsProcessor
-                        ,gp.Cores
-                        ,gp.TMUS
-                        ,gp.ROPS
-                        ,gp.MemorySize
-                        ,gp.MemoryType
-                        ,gp.BusWidth
-                        ,800800 as MediumPrice
-                        ,gp.ImagePath
-                    from 
-                        dbo.GPUs as gp
-                '''
+        select 
+            gp.Name as ProductName
+            ,gp.GraphicsProcessor
+            ,gp.Cores
+            ,gp.TMUS
+            ,gp.ROPS
+            ,gp.MemorySize
+            ,gp.MemoryType
+            ,gp.BusWidth
+            ,800800 as MediumPrice
+            ,gp.ImagePath
+        from 
+            dbo.GPUs as gp
+    '''
     cursor.execute(query)
     data = [list(row) for row in cursor.fetchall()]
     conn.close()
-    data = pd.DataFrame(data=data, columns=['ProductName', 'GraphicsProcessor', 'Cores', 'TMUS', 'ROPS', 'MemorySize', 'MemoryType', 'BusWidth', 'MediumPrice', 'ImagePath'])
-    # data = data.query('ProductName == "NVIDIA GeForce RTX 5090"')
+    data = pd.DataFrame(data=data, columns=['productName', 'graphicsProcessor', 'cores', 'TMUS', 'ROPS', 'memorySize',
+                                            'memoryType', 'busWidth', 'mediumPrice', 'imagePath'])
     return data
 
 def _fetchData():
@@ -66,50 +66,67 @@ def _fetchData():
     data = pd.DataFrame(data=data, columns=['ProductName', 'Price', 'ShopName', 'InsertDate'])
     return data
 
-def _sortData(predicates: list[list]):
-    pass
-
-
-
 @app.post("/createSession")
-async def createSession(sessionGUID: str):
+async def createSession(sessionId: str):
     try:
-        userData = _fetchCategories()
-        UserSessions.append([sessionGUID, userData])
+        UserSessions[sessionId] = {'filters': {}, 'data': pd.DataFrame}
     except:
         return JSONResponse(content={"result": False})
     finally:
+        print(UserSessions)
         return JSONResponse(content={"result": True})
 
-@app.post("/filterCategories")
-async def filterCategories(params: CategoryFilter):
-    return JSONResponse(content={"result": params})
 
+@app.post("/filterCategories/{sessionId}")
+async def filterCategories(sessionId: str, params: CategoryFilter):
+    try:
+        UserSessions[sessionId]['filters'] = params
+        print(f'Для сессии {sessionId} были переданы параметры: {params}')
+        return JSONResponse(content={"result": True})
+    except:
+        print(f'Не получилось обновить параметры сессии. Сессия: {sessionId}, данные: {params}')
+        return JSONResponse(content={"result": True})
 
 @app.get("/assets/{id}", response_class=FileResponse)
 async def cards(id):
     return f'../Assets/{id}'
 
-@app.get("/getCategories")
-async def getCategories():
-    productCategories = categories[
+
+@app.get("/getCategories/{sessionId}")
+async def getCategories(sessionId: str):
+    query_string = ''
+    userCategories = categories
+    filterValues = UserSessions[sessionId]['filters']
+    if filterValues == {}:
+        print('Пусто')
+    else:
+        # Собираем строку запроса
+        for elem in filterValues:
+            if elem[1] != '':
+                if query_string != '':
+                    query_string = query_string + ' and '
+                query_string = query_string + f'{elem[0]}.str.contains("{elem[1]}")'
+
+    if query_string != '':
+        userCategories = categories.query(query_string)
+    productCategories = userCategories[
         [
-            'ProductName',
-            'GraphicsProcessor',
-            'Cores',
+            'productName',
+            'graphicsProcessor',
+            'cores',
             'TMUS',
             'ROPS',
-            'MemorySize',
-            'MemoryType',
-            'BusWidth',
-            'MediumPrice',
-            'ImagePath'
+            'memorySize',
+            'memoryType',
+            'busWidth',
+            'mediumPrice',
+            'imagePath'
         ]
     ].astype('string').values.tolist()
     products = [
         {
-            "productName" : productName,
-            "graphicsProcessor" : graphicsProcessor,
+            "productName": productName,
+            "graphicsProcessor": graphicsProcessor,
             "cores": cores,
             "tmus": tmus,
             "rops": rops,
@@ -143,7 +160,18 @@ async def getVideoCards():
     ]
     return JSONResponse(content=products)
 
+@app.get("/getUniqueValues/{sessionId}/{columnName}")
+async def getUniqueValues(sessionId: str, columnName: str):
+    try:
+        uniqueValues = categories[columnName].unique().tolist()
+        uniqueValues.insert(0, '')
+        return JSONResponse(content=uniqueValues)
+    except Exception as e:
+        logger.error(e)
+        return JSONResponse(content={'result': 'No data available'})
+
 @app.get("/link")
+# Нужно для работы скраппера DNS
 async def link():
     data = """
     <html>
@@ -152,10 +180,11 @@ async def link():
     """
     return HTMLResponse(data)
 
+
 data = _fetchData()
 categories = _fetchCategories()
 # print(categories.columns.tolist())
 
 if __name__ == "__main__":
-    uvicorn.run("api:app", port=5000, log_level="info")
+    uvicorn.run("api:app", host='0.0.0.0' ,port=8000, log_level="info")
 # uvicorn main:app --reload
