@@ -1,13 +1,9 @@
-from logging import exception
-
-from IPython.core.display_functions import display
 from fastapi import FastAPI
 from fastapi.responses import *
 from pydantic import BaseModel
 import uvicorn
 import ConnectionPool as cp
 import pandas as pd
-import json
 import logging
 logger = logging.getLogger("uvicorn")
 
@@ -24,7 +20,7 @@ class CategoryFilter(BaseModel):
     mediumPrice: str
 
 def _fetchCategories():
-    conn = cp.connToSQL()
+    conn = cp.connToSQLserver()
     cursor = conn.cursor()
     query = '''
         select 
@@ -40,7 +36,7 @@ def _fetchCategories():
             ,800800 as MediumPrice
             ,gp.ImagePath
         from 
-            dbo.GPUs as gp
+            dbo.Category as gp
     '''
     cursor.execute(query)
     _data = [list(row) for row in cursor.fetchall()]
@@ -50,7 +46,7 @@ def _fetchCategories():
     return _dataInDF
 
 def _fetchProducts():
-    conn = cp.connToSQL()
+    conn = cp.connToSQLserver()
     cursor = conn.cursor()
     query = '''
                 select 
@@ -195,6 +191,8 @@ async def getUniqueValues(sessionId: str, columnName: str, listType: int):
         elif listType == 2:
             uniqueValues = products[columnName].unique().tolist()
             uniqueValues.insert(0, '')
+        else:
+            uniqueValues = list()
         return JSONResponse(content=uniqueValues)
     except Exception as e:
         logger.error(e)

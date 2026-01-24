@@ -12,7 +12,7 @@
       <driver-ref>sqlserver.ms</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.microsoft.sqlserver.jdbc.SQLServerDriver</jdbc-driver>
-      <jdbc-url>jdbc:sqlserver://sqlserver.lan:1433</jdbc-url>
+      <jdbc-url>jdbc:sqlserver://sqlserver:1433</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="@100.98.191.77" uuid="5ab2e5a7-3aac-425f-a939-b2e3951f0ce4">
