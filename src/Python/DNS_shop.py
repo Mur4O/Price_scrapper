@@ -17,7 +17,7 @@ import logging
 import sys
 import os
 sys.path.append(os.path.join(sys.path[0], '../ConnectionPool.py'))
-from Python import ConnectionPool as cp
+from src.Python import ConnectionPool as cp
 
 logging.basicConfig(level=logging.INFO, filename="../Other/py_log.log", filemode="w", format="%(asctime)s %(levelname)s %(filename)s %(message)s")
 logging.getLogger("selenium").setLevel(logging.ERROR)
