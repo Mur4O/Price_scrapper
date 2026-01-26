@@ -7,6 +7,7 @@ import pandas as pd
 import logging
 logger = logging.getLogger("uvicorn")
 
+
 app = FastAPI()
 UserSessions = {}
 # UserSessions = {'sessionId': {'categoryFilters': {'productName': null, ...}, 'productFilters': }}
