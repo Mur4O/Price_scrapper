@@ -1,18 +1,20 @@
-import re
-import time
-from fake_useragent import UserAgent
-from selenium.common import NoSuchElementException
-from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver import ActionChains
-from selenium.webdriver import ChromeOptions
+from selenium.common import NoSuchElementException
 
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
+
+from webdriver_manager.chrome import ChromeDriverManager
+from fake_useragent import UserAgent
 
 from Timer import Timer
 import logging
+import re
+import time
 
 import sys
 import os
@@ -25,17 +27,19 @@ logging.getLogger("urllib3").setLevel(logging.ERROR)
 
 path_to_dns = "http://127.0.0.1:5000/link"
 
-options = ChromeOptions()
+options = Options()
 options.add_argument("--window-size=1920,1080")
 options.add_argument('--disable-blink-features=AutomationControlled')
 options.add_argument("--disable-extensions")
 options.page_load_strategy = 'eager'
 options.add_experimental_option('useAutomationExtension', False)
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.binary_location = '/Users/yarik/Chrome_with_Driver/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
+# options.binary_location = '/Users/yarik/Chrome_with_Driver/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing'
+# options = Options()
 # options.add_argument("--headless=new")
 
-service = Service(executable_path="/Users/yarik/Chrome_with_Driver/chromedriver-mac-arm64/chromedriver")
+service = Service(ChromeDriverManager().install())
+# service = Service(executable_path="/Users/yarik/Chrome_with_Driver/chromedriver-mac-arm64/chromedriver")
 ua = UserAgent()
 
 class DNS:
@@ -44,6 +48,44 @@ class DNS:
         self.actions = None
         self.user_agent = None
         self.fin_list = []
+
+    def open_dns(self):
+        with Timer('Открываем сайт'):
+
+            while True:
+                self.driver = webdriver.Chrome(options=options)
+                self.actions = ActionChains(self.driver)
+                self.user_agent = ua.random
+                options.add_argument(f'user-agent={self.user_agent}')
+
+                self.driver.get(path_to_dns)
+
+                xpath_to_button = '/html/body/a'
+                button = self.driver.find_element(By.XPATH, xpath_to_button)
+                self.actions.move_to_element(button).click().perform()
+
+                time.sleep(3)
+                self.driver.switch_to.window(self.driver.window_handles[1])
+
+                path_to_403 = '/html/body'
+
+                element = WebDriverWait(self.driver, 10).until(
+                    ec.presence_of_element_located((By.XPATH, path_to_403))
+                )
+                head = self.driver.find_element(By.XPATH, path_to_403)
+                result = head.get_attribute('innerHTML')
+
+                x = re.findall("(Доступ к сайту www.dns-shop.ru запрещен.)", result)
+
+                if len(x) != 0:
+                    self.driver.close()
+                    logging.info(f'Давай по новой')
+                else:
+                    break
+
+            self.fetch_data()
+            self.load_into_db()
+            self.driver.quit()
 
     def fetch_data(self):
         with Timer('Фетчим данные'):
@@ -113,43 +155,5 @@ class DNS:
 
             cursor.close()
             conn.close()
-
-    def open_dns(self):
-        with Timer('Открываем сайт'):
-
-            while True:
-                self.driver = webdriver.Chrome(service=service, options=options)
-                self.actions = ActionChains(self.driver)
-                self.user_agent = ua.random
-                options.add_argument(f'user-agent={self.user_agent}')
-
-                self.driver.get(path_to_dns)
-
-                xpath_to_button = '/html/body/a'
-                button = self.driver.find_element(By.XPATH, xpath_to_button)
-                self.actions.move_to_element(button).click().perform()
-
-                time.sleep(3)
-                self.driver.switch_to.window(self.driver.window_handles[1])
-
-                path_to_403 = '/html/body'
-
-                element = WebDriverWait(self.driver, 10).until(
-                    ec.presence_of_element_located((By.XPATH, path_to_403))
-                )
-                head = self.driver.find_element(By.XPATH, path_to_403)
-                result = head.get_attribute('innerHTML')
-
-                x = re.findall("(Доступ к сайту www.dns-shop.ru запрещен.)", result)
-
-                if len(x) != 0:
-                    self.driver.close()
-                    logging.info(f'Давай по новой')
-                else:
-                    break
-
-        self.fetch_data()
-        self.load_into_db()
-        self.driver.quit()
 
 DNS().open_dns()

@@ -214,9 +214,12 @@ async def link():
     """
     return HTMLResponse(data)
 
-
-products = _fetchProducts()
-categories = _fetchCategories()
+try:
+    products = _fetchProducts()
+    categories = _fetchCategories()
+except Exception as e:
+    logger.error(e)
+    logger.error('API работает без подключения к бд')
 # print(categories.columns.tolist())
 
 
