@@ -120,6 +120,15 @@ class TechPowerUp:
                     logging.info(f'Элемент не интерактивен для {product_name}')
                     pass
         logging.info(f'Список найденных спецификаций: {self.fin_list}')
+        self.load_into_db()
         self.driver.quit()
+        
+    def load_into_db(self):
+        tpu_dir = os.path.dirname(os.path.abspath(__file__))
+        output_path = os.path.join(tpu_dir, 'Other', 'TPU')
+
+        with open(output_path, 'w', encoding='utf-8') as f:
+            for item in self.fin_list:
+                f.write(f"{item}\n")
 
 TechPowerUp().open_techpowerup()

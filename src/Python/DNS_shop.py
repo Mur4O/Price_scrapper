@@ -18,13 +18,34 @@ import logging
 import sys
 import os
 
-# В файлике только функции, поэтому импортируем костылём
-sys.path.append(os.path.join(sys.path[0], '../ConnectionPool.py'))
-from src.Python import ConnectionPool as cp
+import ConnectionPool as cp
 
+# Выставляем рабочую директорию
+base_path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(base_path)
 
+# Настройка логгирования для вывода как в терминал, так и в файл
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-logging.basicConfig(level=logging.INFO, filename="./Other/py_log.log", filemode="w", format="%(asctime)s %(levelname)s %(filename)s %(message)s")
+# Создаем форматтер
+formatter = logging.Formatter("%(asctime)s %(levelname)s %(filename)s %(message)s")
+
+# Обработчик для вывода в терминал
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+
+# Обработчик для записи в файл (в режиме добавления)
+file_handler = logging.FileHandler("./Other/py_log.log", mode="a", encoding="utf-8")
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+# Добавляем обработчики к логгеру
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
+# Устанавливаем уровень логирования для конкретных библиотек
 logging.getLogger("selenium").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
@@ -55,6 +76,7 @@ class DNS:
 
             while True:
                 self.driver = webdriver.Chrome(service=service, options=options)
+                self.driver.implicitly_wait(5)
                 self.actions = ActionChains(self.driver)
                 self.user_agent = ua.random
                 options.add_argument(f'user-agent={self.user_agent}')
@@ -98,7 +120,7 @@ class DNS:
                         time.sleep(1)
 
                         # Для ускорения отладки
-                        break
+                        # break
                     except:
                         break
 
@@ -163,6 +185,14 @@ class DNS:
                 cursor.close()
                 conn.close()
             except:
+                # Запись данных в файл при ошибке
+                dns_dir = os.path.dirname(os.path.abspath(__file__))
+                output_path = os.path.join(dns_dir, 'Other', 'DNS')
+
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    for item in self.fin_list:
+                        f.write(f"{item}\n")
+
                 logger.error('Не удалось записать собранную информацию в бд')
         self.driver.quit()
 
