@@ -41,26 +41,7 @@ class TechPowerUp:
         self.driver = None
         self.actions = None
         self.user_agent = None
-
-    def fetch_data(self, product_name: str):
-        buttons = self.driver.find_elements(By.CLASS_NAME, 'item-name')
-        for button in buttons:
-            link = str(button.get_attribute('innerHTML'))
-            if link.find(product_name) != -1:
-                try:
-                    self.actions.move_to_element(button).click().perform()
-                    time.sleep(randint(5, 10))
-                    specs = self.driver.find_elements(By.CLASS_NAME, 'gpudb-specs-large__value')
-                    
-                    '''
-                        Сюда воткнуть код скраппинга
-                    '''
-                    self.driver.back()
-                    time.sleep(2)
-                except exceptions.ElementNotInteractableException:
-                    pass
-        self.driver.quit()
-
+        self.fin_list = []
 
     def open_techpowerup(self):
         for elem in GPU_list:
@@ -80,5 +61,34 @@ class TechPowerUp:
                 self.driver.quit()
             self.fetch_data(elem)
             time.sleep(3)
+
+    def fetch_data(self, product_name: str):
+        buttons = self.driver.find_elements(By.CLASS_NAME, 'item-name')
+        for button in buttons:
+            link = str(button.get_attribute('innerHTML'))
+            if link.find(product_name) != -1:
+                print('Тыкаем на карточку')
+                try:
+                    self.actions.move_to_element(button).click().perform()
+                    time.sleep(randint(5, 10))
+                    
+                    specs = []
+
+                    name = self.driver.find_element(By.CLASS_NAME, 'gpudb-name')
+                    specs.append(name.get_attribute('innerHTML'))
+
+                    specs = self.driver.find_elements(By.CLASS_NAME, 'gpudb-specs-large__value')
+                    for elem in specs:
+                        # print(elem.get_attribute('innerHTML'))
+                        specs.append(elem.get_attribute('innerHTML'))
+
+                    '''
+                        Сюда воткнуть код скраппинга
+                    '''
+                    self.driver.back()
+                    time.sleep(2)
+                except exceptions.ElementNotInteractableException:
+                    pass
+        self.driver.quit()
 
 TechPowerUp().open_techpowerup()
