@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.service import Service
 from Timer import Timer
 import logging
 
-logging.basicConfig(level=logging.INFO, filename="Other/py_log.log", filemode="a", format="%(asctime)s %(levelname)s %(filename)s %(message)s")
+logging.basicConfig(level=logging.INFO, filename="./Other/py_log.log", filemode="a", format="%(asctime)s %(levelname)s %(filename)s %(message)s")
 logging.getLogger("selenium").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
