@@ -75,11 +75,11 @@ class DNS:
         with Timer('Открываем сайт'):
 
             while True:
+                options.add_argument(f'user-agent={self.user_agent}')
                 self.driver = webdriver.Chrome(service=service, options=options)
                 self.driver.implicitly_wait(5)
                 self.actions = ActionChains(self.driver)
                 self.user_agent = ua.random
-                options.add_argument(f'user-agent={self.user_agent}')
 
                 self.driver.get(path_to_dns)
 

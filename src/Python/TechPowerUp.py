@@ -1,3 +1,7 @@
+# TO-DO:
+# Переписать код так, чтобы он запоминал на каком месте остановился
+# Работать от обратного, искать на TechPowerUp только недостающие видяхи
+
 import time
 import re
 import pyodbc as db
@@ -55,14 +59,19 @@ options.add_argument('--disable-blink-features=AutomationControlled')
 options.add_argument("--disable-extensions")
 options.add_experimental_option('useAutomationExtension', False)
 options.add_experimental_option("excludeSwitches", ["enable-automation"])
+
+options.add_argument("--disable-cache")
+options.add_argument("--disable-application-cache")
+options.add_argument("--disable-cookies")
+
 options.binary_location = chrome_path
 service = Service(executable_path="/Users/yarik/Chrome_with_Driver/chromedriver-mac-arm64/chromedriver")
 ua = UserAgent()
 
 path_techpowerup = "https://www.techpowerup.com/gpu-specs/?q="
 # https://www.techpowerup.com/gpu-specs/?q=5090
-# GPU_list = ['RTX 5000 Ada Generation', 'RTX 5090', 'RTX 5080', 'RTX 5070 Ti', 'RTX 5070', 'RTX 5060 Ti', 'RTX 5060', 'RTX 5050', 'RTX 4070 SUPER', 'RTX 4070', 'RTX 4060', 'RTX 3060', 'RTX 3050', 'GTX 1650', 'GT 1030', 'GT 730', 'GT 710', 'GeForce 210', 'RTX A5000', 'RTX A4500', 'RTX A4000', 'Quadro T1000', 'Quadro RTX A4000', 'Radeon RX 9070 XT', 'Radeon RX 9070', 'Radeon RX 9060 XT', 'Radeon RX 7800 XT', 'Radeon RX 7700 XT', 'Radeon RX 7600 XT', 'Radeon RX 7600', 'Radeon RX 6600', 'Radeon RX 6500 XT', 'Radeon RX 6400', 'Radeon RX 550', 'Radeon R7 240', 'Radeon PRO W7900 AI TOP', 'Radeon PRO W7800 AI TOP', 'Arc B580', 'Arc B570', 'Arc A580', 'Arc A380', 'Arc A310']
-GPU_list = ['RTX 5090']
+GPU_list = ['RTX 5000 Ada Generation', 'RTX 5090', 'RTX 5080', 'RTX 5070 Ti', 'RTX 5070', 'RTX 5060 Ti', 'RTX 5060', 'RTX 5050', 'RTX 4070 SUPER', 'RTX 4070', 'RTX 4060', 'RTX 3060', 'RTX 3050', 'GTX 1650', 'GT 1030', 'GT 730', 'GT 710', 'GeForce 210', 'RTX A5000', 'RTX A4500', 'RTX A4000', 'Quadro T1000', 'Quadro RTX A4000', 'Radeon RX 9070 XT', 'Radeon RX 9070', 'Radeon RX 9060 XT', 'Radeon RX 7800 XT', 'Radeon RX 7700 XT', 'Radeon RX 7600 XT', 'Radeon RX 7600', 'Radeon RX 6600', 'Radeon RX 6500 XT', 'Radeon RX 6400', 'Radeon RX 550', 'Radeon R7 240', 'Radeon PRO W7900 AI TOP', 'Radeon PRO W7800 AI TOP', 'Arc B580', 'Arc B570', 'Arc A580', 'Arc A380', 'Arc A310']
+# GPU_list = ['RTX 5090']
 params = []
 
 class TechPowerUp:
@@ -74,16 +83,17 @@ class TechPowerUp:
 
     def open_techpowerup(self):
         for elem in GPU_list:
+            options.add_argument(f'user-agent={self.user_agent}')
             self.driver = webdriver.Chrome(service=service, options=options)
             self.actions = ActionChains(self.driver)
             self.driver.implicitly_wait(5)
             self.user_agent = ua.random
-            options.add_argument(f'user-agent={self.user_agent}')
 
             path = path_techpowerup + elem.replace(' ', '+')
             try:
                 logging.info(f'Пробуем получить данные о {elem}')
                 self.driver.get(path)
+                self.driver.delete_all_cookies() 
                 time.sleep(3)
             except exceptions.TimeoutException:
                 logging.critical('ERR_CONNECT_TO_TECHPOWERUP')
@@ -115,11 +125,15 @@ class TechPowerUp:
                         Сюда воткнуть код скраппинга
                     '''
                     self.driver.back()
-                    time.sleep(2)
+                    time.sleep(5)
                 except exceptions.ElementNotInteractableException:
                     logging.info(f'Элемент не интерактивен для {product_name}')
                     pass
-        logging.info(f'Список найденных спецификаций: {self.fin_list}')
+                except exceptions.NoSuchElementException:
+                    logging.warning(f'NoSuchElementException для {product_name}. ')
+                    time.sleep(300)
+                    pass
+        # logging.info(f'Список найденных спецификаций: {self.fin_list}')
         self.load_into_db()
         self.driver.quit()
         
