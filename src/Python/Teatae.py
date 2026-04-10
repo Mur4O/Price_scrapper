@@ -12,6 +12,8 @@ from selenium.webdriver.common.selenium_manager import logger
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 
+from selenium_stealth import stealth
+
 from Timer import Timer
 import logging
 
@@ -49,7 +51,7 @@ logger.addHandler(file_handler)
 logging.getLogger("selenium").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
-path_to_dns = "http://127.0.0.1:8000/link"
+path_to_dns = "https://bot.sannysoft.com/"
 
 options = ChromeOptions()
 options.add_argument("--window-size=1920,1080")
@@ -78,12 +80,23 @@ class DNS:
                 self.user_agent = ua.random
                 options.add_argument(f'user-agent={self.user_agent}')
                 self.driver = webdriver.Chrome(service=service, options=options)
+                
+                stealth(self.driver,
+                    languages=["en-US", "en"],
+                    vendor="Google Inc.",
+                    platform="Win32",
+                    webgl_vendor="Intel Inc.",
+                    renderer="Intel Iris OpenGL Engine",
+                    fix_hairline=True,
+                )
+                
                 self.driver.implicitly_wait(10)
                 self.actions = ActionChains(self.driver)
 
                 self.driver.get(path_to_dns)
+                time.sleep(3000)
 
-                xpath_to_button = '/html/body/a'
+                xpath_to_button = '/html/body/div[4]/div[2]/div[2]/div/div[3]/div[1]/div[1]/div[2]/div/div/div/div/div/div/div[3]/div[5]/div/span/a'
                 button = self.driver.find_element(By.XPATH, xpath_to_button)
                 self.actions.move_to_element(button).click().perform()
 

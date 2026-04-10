@@ -1,8 +1,8 @@
 import re
+import os
 import pyodbc as db
 import selenium
 from fake_useragent import UserAgent
-from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -38,6 +38,17 @@ class Sitilink:
         self.user_agent = ua.random
         options.add_argument(f'user-agent={self.user_agent}')
         self.fin_list = []
+        
+    def open_sitilink(self):
+        with Timer('Стучимся на сайт'):
+            try:
+                # driver.set_page_load_timeout(1)
+                self.driver.get(path_citilink_videocard)
+            except selenium.common.exceptions.TimeoutException:
+                logging.critical('ERR_CONNECT_TO_SITILINK')
+                self.driver.quit()
+
+        self.fetch_data()
 
     def fetch_data(self):
         with Timer('Фетчим данные'):
@@ -82,10 +93,18 @@ class Sitilink:
             self.fin_list = list(zip(cleaned_names, cleaned_prices))
 
             print(self.fin_list)
+        self.load_into_db()
 
     def load_into_db(self):
         # pass
         with Timer('Заливаем в бд'):
+            tpu_dir = os.path.dirname(os.path.abspath(__file__))
+            output_path = os.path.join(tpu_dir, 'Other', 'Sitilink')
+
+            with open(output_path, 'w', encoding='utf-8') as f:
+                for item in self.fin_list:
+                    f.write(f"{item}\n")
+            
             conn = db.connect(
                               'driver={ODBC Driver 18 for SQL Server};'
                               'server=100.98.191.77;'
@@ -111,19 +130,6 @@ class Sitilink:
 
             cursor.close()
             conn.close()
-
-
-    def open_sitilink(self):
-        with Timer('Стучимся на сайт'):
-            try:
-                # driver.set_page_load_timeout(1)
-                self.driver.get(path_citilink_videocard)
-            except selenium.common.exceptions.TimeoutException:
-                logging.critical('ERR_CONNECT_TO_SITILINK')
-                self.driver.quit()
-
-        self.fetch_data()
-        self.load_into_db()
         self.driver.quit()
 
 Sitilink().open_sitilink()

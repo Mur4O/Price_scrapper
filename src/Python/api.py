@@ -69,6 +69,14 @@ def _fetchProducts():
     _dataInDF = pd.DataFrame(data=_data, columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
     return _dataInDF
 
+try:
+    products = _fetchProducts()
+    categories = _fetchCategories()
+except Exception as e:
+    logger.error(e)
+    logger.error('API работает без подключения к бд')
+    products = pd.DataFrame(columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
+    categories = pd.DataFrame(columns=['categoryId', 'productName', 'graphicsProcessor', 'cores', 'TMUS', 'ROPS', 'memorySize', 'memoryType', 'busWidth', 'mediumPrice', 'imagePath'])
 
 @app.post("/createSession")
 async def createSession(sessionId: str):
@@ -214,14 +222,9 @@ async def link():
     </html>
     """
     return HTMLResponse(data)
-
-try:
-    products = _fetchProducts()
-    categories = _fetchCategories()
-except Exception as e:
-    logger.error(e)
-    logger.error('API работает без подключения к бд')
+    
 # print(categories.columns.tolist())
+
 
 
 if __name__ == "__main__":
