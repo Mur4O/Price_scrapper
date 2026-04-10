@@ -1,15 +1,12 @@
-from logging import exception
-
-from IPython.core.display_functions import display
 from fastapi import FastAPI
 from fastapi.responses import *
 from pydantic import BaseModel
 import uvicorn
 import ConnectionPool as cp
 import pandas as pd
-import json
 import logging
 logger = logging.getLogger("uvicorn")
+
 
 app = FastAPI()
 UserSessions = {}
@@ -24,7 +21,7 @@ class CategoryFilter(BaseModel):
     mediumPrice: str
 
 def _fetchCategories():
-    conn = cp.connToSQL()
+    conn = cp.connToSQLserver()
     cursor = conn.cursor()
     query = '''
         select 
@@ -40,7 +37,7 @@ def _fetchCategories():
             ,800800 as MediumPrice
             ,gp.ImagePath
         from 
-            dbo.GPUs as gp
+            dbo.Category as gp
     '''
     cursor.execute(query)
     _data = [list(row) for row in cursor.fetchall()]
@@ -50,7 +47,7 @@ def _fetchCategories():
     return _dataInDF
 
 def _fetchProducts():
-    conn = cp.connToSQL()
+    conn = cp.connToSQLserver()
     cursor = conn.cursor()
     query = '''
                 select 
@@ -72,6 +69,14 @@ def _fetchProducts():
     _dataInDF = pd.DataFrame(data=_data, columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
     return _dataInDF
 
+try:
+    products = _fetchProducts()
+    categories = _fetchCategories()
+except Exception as e:
+    logger.error(e)
+    logger.error('API работает без подключения к бд')
+    products = pd.DataFrame(columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
+    categories = pd.DataFrame(columns=['categoryId', 'productName', 'graphicsProcessor', 'cores', 'TMUS', 'ROPS', 'memorySize', 'memoryType', 'busWidth', 'mediumPrice', 'imagePath'])
 
 @app.post("/createSession")
 async def createSession(sessionId: str):
@@ -195,6 +200,8 @@ async def getUniqueValues(sessionId: str, columnName: str, listType: int):
         elif listType == 2:
             uniqueValues = products[columnName].unique().tolist()
             uniqueValues.insert(0, '')
+        else:
+            uniqueValues = list()
         return JSONResponse(content=uniqueValues)
     except Exception as e:
         logger.error(e)
@@ -215,11 +222,9 @@ async def link():
     </html>
     """
     return HTMLResponse(data)
-
-
-products = _fetchProducts()
-categories = _fetchCategories()
+    
 # print(categories.columns.tolist())
+
 
 
 if __name__ == "__main__":
