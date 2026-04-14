@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.responses import *
 from pydantic import BaseModel
@@ -11,6 +12,9 @@ logger = logging.getLogger("uvicorn")
 app = FastAPI()
 UserSessions = {}
 # UserSessions = {'sessionId': {'categoryFilters': {'productName': null, ...}, 'productFilters': }}
+# Выставляем рабочую директорию
+base_path = os.path.dirname(os.path.abspath(__file__))
+os.chdir(base_path)
 
 class CategoryFilter(BaseModel):
     productName: str
