@@ -17,7 +17,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.service import Service
 
-from Timer import Timer
+# from Timer import Timer
 import logging
 
 # Выставляем рабочую директорию
@@ -84,15 +84,19 @@ class TechPowerUp:
     def open_techpowerup(self):
         for elem in GPU_list:
             options.add_argument(f'user-agent={self.user_agent}')
+            options.add_argument('--lang=ru-RU')
             self.driver = webdriver.Chrome(service=service, options=options)
             self.actions = ActionChains(self.driver)
             self.driver.implicitly_wait(5)
             self.user_agent = ua.random
 
             path = path_techpowerup + elem.replace(' ', '+')
+            # path = 'https://www.techpowerup.com/gpu-specs/api/v1/cards'
             try:
                 logging.info(f'Пробуем получить данные о {elem}')
-                self.driver.get(path)
+                # self.driver.get(path)
+                self.driver.get('https://google.com')
+                self.driver.execute_script(f"window.location.href = '{path}'")
                 self.driver.delete_all_cookies() 
                 time.sleep(3)
             except exceptions.TimeoutException:

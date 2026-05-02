@@ -173,23 +173,26 @@ async def filterProducts(sessionId: str):
 
 @app.get("/getProductsByCategory/{sessionId}/{categoryId}")
 async def getProductsByCategory(sessionId: str, categoryId: str):
-    if categoryId is None:
+    if sessionId is None:
         logger.error('В метод getProductsByCategory не был передан идентификатор категории')
     userProducts = products.query(f'categoryId == {int(categoryId)}')
     _data = userProducts[
         [
             'productName',
             'price',
+            'shopName'
         ]
     ].astype('string').values.tolist()
     _products = [
         {
             "productName": name,
-            "price": price
+            "price": price,
+            "shopName": shopName
         }
         for
             name,
-            price
+            price,
+            shopName
         in _data
     ]
     return JSONResponse(content=_products)
