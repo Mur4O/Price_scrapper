@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import requests
@@ -65,9 +66,12 @@ def download_images_from_tpu():
         name = soup.find(class_='gpudb-name')
         print(name.get_text())
         
-        with open(f'Assets/{name.get_text()}.jpg', 'wb') as f:
-            img_data = requests.get(f'{element.get("href")}').content
-            f.write(img_data)
+        if os.path.exists(f'Assets/Products/{name.get_text()}.jpg'):
+            print(f'Image for {name.get_text()} already exists. Skipping download.')
+        else:
+            with open(f'Assets/Products/{name.get_text()}.jpg', 'wb') as f:
+                img_data = requests.get(f'{element.get("href")}').content
+                f.write(img_data)
 
         time.sleep(20)
         
