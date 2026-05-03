@@ -180,19 +180,22 @@ async def getProductsByCategory(sessionId: str, categoryId: str):
         [
             'productName',
             'price',
-            'shopName'
+            'shopName',
+            'imagePath'
         ]
     ].astype('string').values.tolist()
     _products = [
         {
             "productName": name,
             "price": price,
-            "shopName": shopName
+            "shopName": shopName,
+            "imagePath": imagePath,
         }
         for
             name,
             price,
-            shopName
+            shopName,
+            imagePath
         in _data
     ]
     return JSONResponse(content=_products)
@@ -215,9 +218,13 @@ async def getUniqueValues(sessionId: str, columnName: str, listType: int):
         return JSONResponse(content={'result': 'No data available'})
 
 
-@app.get("/assets/{id}", response_class=FileResponse)
+@app.get("/assets/category/{id}", response_class=FileResponse)
 async def cards(id):
-    return f'../Assets/{id}'
+    return f'../Assets/Category/{id}'
+
+@app.get("/assets/product/{id}", response_class=FileResponse)
+async def cards(id):
+    return f'../Assets/Product/{id}'
 
 
 @app.get("/link")
