@@ -60,6 +60,7 @@ def _fetchProducts():
                     ,sh.ShopName
                     ,rd.InsertDate
                     ,rd.CategoryId
+                    ,rd.ImagePath
                 from 
                     dbo.RawData as rd
                     join dbo.Shops as sh on
@@ -70,7 +71,7 @@ def _fetchProducts():
     cursor.execute(query)
     _data = [list(row) for row in cursor.fetchall()]
     conn.close()
-    _dataInDF = pd.DataFrame(data=_data, columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
+    _dataInDF = pd.DataFrame(data=_data, columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId', 'imagePath'])
     return _dataInDF
 
 try:
@@ -79,7 +80,7 @@ try:
 except Exception as e:
     logger.error(e)
     logger.error('API работает без подключения к бд')
-    products = pd.DataFrame(columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId'])
+    products = pd.DataFrame(columns=['productName', 'price', 'shopName', 'insertDate', 'categoryId', 'imagePath'])
     categories = pd.DataFrame(columns=['categoryId', 'productName', 'graphicsProcessor', 'cores', 'TMUS', 'ROPS', 'memorySize', 'memoryType', 'busWidth', 'mediumPrice', 'imagePath'])
 
 @app.post("/createSession")
